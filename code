@@ -1,0 +1,131 @@
+CREATE DATABASE IF NOT EXISTS retail_analysis;
+USE retail_analysis;
+
+CREATE TABLE retail_sales (
+    transaction_id VARCHAR(50),
+    transaction_date VARCHAR(50),
+    customer_id VARCHAR(50),
+    gender VARCHAR(10),
+    age VARCHAR(10),
+    product_category VARCHAR(50),
+    quantity VARCHAR(10),
+    price_per_unit VARCHAR(20),
+    total_amount VARCHAR(20)
+);
+
+
+SET GLOBAL local_infile = 1;
+
+
+LOAD DATA LOCAL INFILE 'retail_sales_dataset.csv'
+INTO TABLE retail_sales
+FIELDS TERMINATED BY ','
+ENCLOSED BY '"'
+LINES TERMINATED BY '\n'
+IGNORE 1 ROWS;
+
+SELECT COUNT(*) AS total_records FROM retail_sales;
+SELECT * FROM retail_sales LIMIT 10;
+
+
+ALTER TABLE retail_sales
+MODIFY transaction_id INT,
+MODIFY customer_id INT,
+MODIFY age INT,
+MODIFY quantity INT,
+MODIFY price_per_unit DECIMAL(10,2),
+MODIFY total_amount DECIMAL(10,2);
+
+UPDATE retail_sales
+SET transaction_date = STR_TO_DATE(transaction_date, '%Y-%m-%d');
+
+ALTER TABLE retail_sales
+MODIFY transaction_date DATE;
+
+DESCRIBE retail_sales;
+
+
+-- Total Revenue
+SELECT 
+    SUM(total_amount) AS total_revenue
+FROM retail_sales;
+
+-- Monthly Sales Trend
+SELECT 
+    DATE_FORMAT(transaction_date,'%Y-%m') AS month,
+    SUM(total_amount) AS monthly_sales
+FROM retail_sales
+GROUP BY month
+ORDER BY month;
+
+-- Product Category Performance
+SELECT 
+    product_category,
+    SUM(total_amount) AS category_revenue,
+    SUM(quantity) AS total_units_sold
+FROM retail_sales
+GROUP BY product_category
+ORDER BY category_revenue DESC;
+
+-- Average Order Value
+SELECT 
+    ROUND(AVG(total_amount),2) AS avg_order_value
+FROM retail_sales;
+
+
+-- Top 10 High-Value Customers
+SELECT 
+    customer_id,
+    SUM(total_amount) AS total_spent
+FROM retail_sales
+GROUP BY customer_id
+ORDER BY total_spent DESC
+LIMIT 10;
+
+-- Repeat Customers
+SELECT 
+    customer_id,
+    COUNT(transaction_id) AS transaction_count
+FROM retail_sales
+GROUP BY customer_id
+HAVING transaction_count > 1;
+
+-- Gender-based Revenue
+SELECT 
+    gender,
+    SUM(total_amount) AS revenue,
+    COUNT(transaction_id) AS transactions
+FROM retail_sales
+GROUP BY gender;
+
+-- Age Group Analysis
+SELECT
+    CASE
+        WHEN age < 25 THEN 'Under 25'
+        WHEN age BETWEEN 25 AND 40 THEN '25-40'
+        WHEN age BETWEEN 41 AND 60 THEN '41-60'
+        ELSE '60+'
+    END AS age_group,
+    SUM(total_amount) AS revenue
+FROM retail_sales
+GROUP BY age_group
+ORDER BY revenue DESC;
+
+
+-- Rank Product Categories by Revenue
+SELECT 
+    product_category,
+    SUM(total_amount) AS revenue,
+    RANK() OVER (ORDER BY SUM(total_amount) DESC) AS revenue_rank
+FROM retail_sales
+GROUP BY product_category;
+
+-- Cumulative Revenue Over Time
+SELECT 
+    transaction_date,
+    SUM(total_amount) AS daily_sales,
+    SUM(SUM(total_amount)) OVER (ORDER BY transaction_date) AS cumulative_sales
+FROM retail_sales
+GROUP BY transaction_date
+ORDER BY transaction_date;
+

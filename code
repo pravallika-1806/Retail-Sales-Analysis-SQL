@@ -1,17 +1,6 @@
 CREATE DATABASE IF NOT EXISTS retail_analysis;
 USE retail_analysis;
 
-
-/* =========================================================
-   2. DROP TABLE IF EXISTS
-   ========================================================= */
-DROP TABLE IF EXISTS retail_sales;
-
-
-/* =========================================================
-   3. CREATE TABLE (SAFE IMPORT MODE)
-   Using VARCHAR to avoid CSV import errors
-   ========================================================= */
 CREATE TABLE retail_sales (
     transaction_id VARCHAR(50),
     transaction_date VARCHAR(50),
@@ -24,17 +13,9 @@ CREATE TABLE retail_sales (
     total_amount VARCHAR(20)
 );
 
-
-/* =========================================================
-   4. ENABLE CSV IMPORT
-   ========================================================= */
 SET GLOBAL local_infile = 1;
 
 
-/* =========================================================
-   5. LOAD CSV DATA
-   Place CSV file in same folder or update path
-   ========================================================= */
 LOAD DATA LOCAL INFILE 'retail_sales_dataset.csv'
 INTO TABLE retail_sales
 FIELDS TERMINATED BY ','
@@ -42,17 +23,9 @@ ENCLOSED BY '"'
 LINES TERMINATED BY '\n'
 IGNORE 1 ROWS;
 
-
-/* =========================================================
-   6. VERIFY DATA IMPORT
-   ========================================================= */
 SELECT COUNT(*) AS total_records FROM retail_sales;
 SELECT * FROM retail_sales LIMIT 10;
 
-
-/* =========================================================
-   7. DATA CLEANING & TYPE CONVERSION
-   ========================================================= */
 ALTER TABLE retail_sales
 MODIFY transaction_id INT,
 MODIFY customer_id INT,
@@ -61,27 +34,14 @@ MODIFY quantity INT,
 MODIFY price_per_unit DECIMAL(10,2),
 MODIFY total_amount DECIMAL(10,2);
 
-
-/* =========================================================
-   8. DATE FORMAT CONVERSION
-   (Change format if your CSV uses DD-MM-YYYY)
-   ========================================================= */
 UPDATE retail_sales
 SET transaction_date = STR_TO_DATE(transaction_date, '%Y-%m-%d');
 
 ALTER TABLE retail_sales
 MODIFY transaction_date DATE;
 
-
-/* =========================================================
-   9. FINAL STRUCTURE CHECK
-   ========================================================= */
 DESCRIBE retail_sales;
 
-
-/* =========================================================
-   10. BUSINESS ANALYSIS QUERIES
-   ========================================================= */
 
 -- Total Revenue
 SELECT 
@@ -111,10 +71,6 @@ SELECT
 FROM retail_sales;
 
 
-/* =========================================================
-   11. CUSTOMER ANALYSIS
-   ========================================================= */
-
 -- Top 10 High-Value Customers
 SELECT 
     customer_id,
@@ -131,11 +87,6 @@ SELECT
 FROM retail_sales
 GROUP BY customer_id
 HAVING transaction_count > 1;
-
-
-/* =========================================================
-   12. DEMOGRAPHIC ANALYSIS
-   ========================================================= */
 
 -- Gender-based Revenue
 SELECT 
@@ -159,10 +110,6 @@ GROUP BY age_group
 ORDER BY revenue DESC;
 
 
-/* =========================================================
-   13. ADVANCED SQL (WINDOW FUNCTIONS)
-   ========================================================= */
-
 -- Rank Product Categories by Revenue
 SELECT 
     product_category,
@@ -179,8 +126,3 @@ SELECT
 FROM retail_sales
 GROUP BY transaction_date
 ORDER BY transaction_date;
-
-
-/* =========================================================
-   END OF PROJECT
-   ========================================================= */
